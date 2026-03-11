@@ -11,22 +11,23 @@ global.client = {
     handleReply: [],
     handleReaction: [],
     api: null,
-    config: require('./config.json')
+    config: require('./config.json'),
+    startTime: Date.now()
 };
 
 async function loadModules() {
-    // تحميل الأوامر
     const commandFiles = fs.readdirSync(path.join(__dirname, 'cmd/commands')).filter(file => file.endsWith('.js'));
     for (const file of commandFiles) {
+        delete require.cache[require.resolve(`./cmd/commands/${file}`)];
         const command = require(`./cmd/commands/${file}`);
         if (command.config && command.config.name) {
             global.client.commands.set(command.config.name, command);
         }
     }
     
-    // تحميل الأحداث
     const eventFiles = fs.readdirSync(path.join(__dirname, 'cmd/events')).filter(file => file.endsWith('.js'));
     for (const file of eventFiles) {
+        delete require.cache[require.resolve(`./cmd/events/${file}`)];
         const event = require(`./cmd/events/${file}`);
         if (event.config && event.config.name) {
             global.client.events.set(event.config.name, event);
@@ -36,10 +37,8 @@ async function loadModules() {
     logger.info(`تم تحميل ${global.client.commands.size} أمراً و ${global.client.events.size} حدثاً.`);
 }
 
-async function startBot() {
+function startBot() {
     try {
-        await loadModules();
-        
         if (!fs.existsSync('./appstate.json')) {
             logger.error("لم يتم العثور على ملف appstate.json.");
             return;
@@ -48,22 +47,45 @@ async function startBot() {
         const appState = JSON.parse(fs.readFileSync('./appstate.json', 'utf8'));
 
         login({ appState }, (err, api) => {
-            if (err) return logger.error("فشل تسجيل الدخول:", err);
+            if (err) {
+                logger.error("فشل تسجيل الدخول، سيتم إعادة المحاولة بعد 10 ثوانٍ...", err);
+                return setTimeout(startBot, 10000);
+            }
             
             global.client.api = api;
             api.setOptions(global.client.config.FCA_OPTIONS);
 
             const mainHandler = require('./handlers/mainHandler.js');
-            api.listenMqtt(async (err, event) => {
-                if (err) return logger.error("خطأ في الاستماع للأحداث:", err);
+            const listenEmitter = api.listenMqtt(async (err, event) => {
+                if (err) {
+                    logger.error("خطأ في الاستماع (MQTT)، جاري إعادة التشغيل...", err);
+                    if (listenEmitter) listenEmitter.stopListening();
+                    return startBot();
+                }
                 await mainHandler({ event, api });
             });
 
             logger.success("تم تشغيل البوت بنجاح بواسطة Manus!");
         });
     } catch (error) {
-        logger.error("حدث خطأ أثناء تشغيل البوت:", error);
+        logger.error("حدث خطأ غير متوقع، سيتم إعادة المحاولة بعد 10 ثوانٍ...", error);
+        setTimeout(startBot, 10000);
     }
 }
 
-startBot();
+async function init() {
+    await loadModules();
+    startBot();
+}
+
+init();
+
+// نظام مراقبة بسيط لإعادة التشغيل عند التوقف المفاجئ
+process.on('unhandledRejection', (reason, p) => {
+    logger.error('Unhandled Rejection at: Promise', p, 'reason:', reason);
+});
+
+process.on('uncaughtException', (err) => {
+    logger.error('Uncaught Exception thrown', err);
+    // يمكنك إضافة منطق إعادة تشغيل هنا إذا لزم الأمر
+});

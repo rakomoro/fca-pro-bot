@@ -4,7 +4,7 @@
   "description": "Professional Facebook Messenger Bot using ws3-fca",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node start.js"
   },
   "dependencies": {
     "ws3-fca": "latest",
