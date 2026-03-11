@@ -1,11 +1,12 @@
-const { userDb } = require('../database/db.js');
+const { userDb } = require('../../database/db.js');
 
 module.exports = {
     config: {
         name: "freefire",
-        description: "لعبة فري فاير - اهبط في الجزيرة وحاول البقاء حياً",
+        description: "لعبة فري فاير - اهبط في الجزيرة",
         usage: "",
-        category: "ألعاب"
+        category: "ألعاب",
+        cooldowns: 20
     },
     run: async function({ api, event }) {
         const { senderID, threadID, messageID } = event;

@@ -1,11 +1,12 @@
-const { userDb } = require('../database/db.js');
+const { userDb } = require('../../database/db.js');
 
 module.exports = {
     config: {
         name: "balance",
-        description: "يعرض رصيدك الحالي",
+        description: "عرض رصيدك الحالي",
         usage: "",
-        category: "نظام"
+        category: "نظام",
+        cooldowns: 3
     },
     run: async function({ api, event }) {
         const { senderID, threadID, messageID } = event;

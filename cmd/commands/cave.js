@@ -1,11 +1,12 @@
-const { userDb } = require('../database/db.js');
+const { userDb } = require('../../database/db.js');
 
 module.exports = {
     config: {
         name: "cave",
-        description: "لعبة المغارة - استكشف الكنوز في أعماق الأرض",
+        description: "لعبة المغارة - استكشف الكنوز",
         usage: "",
-        category: "ألعاب"
+        category: "ألعاب",
+        cooldowns: 10
     },
     run: async function({ api, event }) {
         const { senderID, threadID, messageID } = event;
@@ -26,7 +27,7 @@ module.exports = {
             api.sendMessage(`🔦 استكشفت المغارة ووجدت كنزاً بقيمة ${reward} عملة!`, threadID, messageID);
         } else {
             await userDb.updateMoney(senderID, -loss);
-            api.sendMessage(`🦇 هاجمتك الخفافيش في المغارة وفقدت ${loss} عملة أثناء الهروب!`, threadID, messageID);
+            api.sendMessage(`🦇 هاجمتك الخفافيش وفقدت ${loss} عملة!`, threadID, messageID);
         }
     }
 };

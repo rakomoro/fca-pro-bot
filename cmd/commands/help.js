@@ -1,13 +1,14 @@
 module.exports = {
     config: {
         name: "help",
-        description: "يعرض قائمة بجميع الأوامر المتاحة",
-        usage: "[اسم الأمر]",
-        category: "نظام"
+        description: "عرض قائمة الأوامر",
+        usage: "[الأمر]",
+        category: "نظام",
+        cooldowns: 5
     },
     run: async function({ api, event, args }) {
         const { threadID, messageID } = event;
-        const prefix = global.client.config.prefix;
+        const prefix = global.client.config.PREFIX;
         
         if (!args[0]) {
             let msg = "📜 قائمة الأوامر المتاحة:\n\n";
@@ -23,12 +24,12 @@ module.exports = {
                 msg += `🔹 ${cat}:\n  ${categories[cat].join(", ")}\n\n`;
             }
 
-            msg += `استخدم ${prefix}help [اسم الأمر] لمعرفة المزيد حول أمر معين.`;
+            msg += `استخدم ${prefix}help [اسم الأمر] لمعرفة المزيد.`;
             return api.sendMessage(msg, threadID, messageID);
         }
 
         const command = global.client.commands.get(args[0].toLowerCase());
-        if (!command) return api.sendMessage(`لا يوجد أمر بهذا الاسم: ${args[0]}`, threadID, messageID);
+        if (!command) return api.sendMessage(`لا يوجد أمر باسم: ${args[0]}`, threadID, messageID);
 
         const { name, description, usage, category } = command.config;
         api.sendMessage(`🔍 تفاصيل الأمر:\n\n📌 الاسم: ${name}\n📖 الوصف: ${description}\n📂 الفئة: ${category}\n💡 الاستخدام: ${prefix}${name} ${usage}`, threadID, messageID);

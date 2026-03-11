@@ -1,9 +1,6 @@
 module.exports = {
     config: {
         name: "welcome",
-        description: "يرحب بالأعضاء الجدد",
-        usage: "",
-        category: "نظام",
         eventType: ["log:subscribe"]
     },
     run: async function({ api, event }) {

@@ -1,11 +1,12 @@
-const { userDb } = require('../database/db.js');
+const { userDb } = require('../../database/db.js');
 
 module.exports = {
     config: {
         name: "war",
-        description: "لعبة الحرب - ادخل في معركة ضد جيش معادي",
+        description: "لعبة الحرب - ادخل معركة",
         usage: "",
-        category: "ألعاب"
+        category: "ألعاب",
+        cooldowns: 15
     },
     run: async function({ api, event }) {
         const { senderID, threadID, messageID } = event;
@@ -23,10 +24,10 @@ module.exports = {
 
         if (outcome > 0.5) {
             await userDb.updateMoney(senderID, reward);
-            api.sendMessage(`⚔️ انتصرت في الحرب وحصلت على غنائم بقيمة ${reward} عملة!`, threadID, messageID);
+            api.sendMessage(`⚔️ انتصرت في الحرب وحصلت على ${reward} عملة!`, threadID, messageID);
         } else {
             await userDb.updateMoney(senderID, -loss);
-            api.sendMessage(`🛡️ خسرت في الحرب وفقدت معدات بقيمة ${loss} عملة!`, threadID, messageID);
+            api.sendMessage(`🛡️ خسرت في الحرب وفقدت ${loss} عملة!`, threadID, messageID);
         }
     }
 };

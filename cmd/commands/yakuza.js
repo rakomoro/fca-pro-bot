@@ -1,11 +1,12 @@
-const { userDb } = require('../database/db.js');
+const { userDb } = require('../../database/db.js');
 
 module.exports = {
     config: {
         name: "yakuza",
-        description: "لعبة الياكوزا - انضم لعصابة المافيا اليابانية ونفذ مهام خطيرة",
+        description: "لعبة الياكوزا - مهام عصابة",
         usage: "",
-        category: "ألعاب"
+        category: "ألعاب",
+        cooldowns: 30
     },
     run: async function({ api, event }) {
         const { senderID, threadID, messageID } = event;
@@ -23,10 +24,10 @@ module.exports = {
 
         if (outcome > 0.6) {
             await userDb.updateMoney(senderID, reward);
-            api.sendMessage(`👺 نفذت مهمة سرية للياكوزا بنجاح وحصلت على ${reward} عملة كأجر!`, threadID, messageID);
+            api.sendMessage(`👺 نفذت مهمة للياكوزا وحصلت على ${reward} عملة!`, threadID, messageID);
         } else {
             await userDb.updateMoney(senderID, -loss);
-            api.sendMessage(`🚔 تم القبض عليك من قبل الشرطة أثناء مهمة للياكوزا ودفعت كفالة ${loss} عملة!`, threadID, messageID);
+            api.sendMessage(`🚔 تم القبض عليك وفقدت ${loss} عملة!`, threadID, messageID);
         }
     }
 };

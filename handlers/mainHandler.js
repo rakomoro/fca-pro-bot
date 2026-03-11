@@ -3,16 +3,27 @@ const handleReply = require('./handleReply.js');
 const handleReaction = require('./handleReaction.js');
 const logger = require('../utils/logger.js');
 
-module.exports = async function({ event }) {
+module.exports = async function({ event, api }) {
     if (!event) return;
 
-    // تشغيل handleEvent لجميع الأوامر
+    // تشغيل الأحداث (Events) لجميع الأوامر
     for (const [name, command] of global.client.commands) {
         if (command.handleEvent) {
             try {
-                await command.handleEvent({ api: global.client.api, event });
+                await command.handleEvent({ api, event });
             } catch (e) {
                 logger.error(`خطأ في handleEvent للأمر ${name}:`, e);
+            }
+        }
+    }
+
+    // تشغيل ملفات الأحداث المستقلة (Events in cmd/events)
+    for (const [name, eventModule] of global.client.events) {
+        if (eventModule.config && eventModule.config.eventType && eventModule.config.eventType.includes(event.logMessageType || event.type)) {
+            try {
+                await eventModule.run({ api, event });
+            } catch (e) {
+                logger.error(`خطأ في تنفيذ الحدث ${name}:`, e);
             }
         }
     }
@@ -22,23 +33,14 @@ module.exports = async function({ event }) {
             case "message":
             case "message_reply":
                 if (event.messageReply) {
-                    await handleReply({ event, api: global.client.api });
+                    await handleReply({ event, api });
                 } else {
-                    await handleCommand({ event, api: global.client.api });
+                    await handleCommand({ event, api });
                 }
                 break;
 
             case "message_reaction":
-                await handleReaction({ event, api: global.client.api });
-                break;
-
-            case "log:subscribe":
-            case "log:unsubscribe":
-                for (const [name, command] of global.client.commands) {
-                    if (command.config && command.config.eventType && command.config.eventType.includes(event.logMessageType)) {
-                        await command.run({ api: global.client.api, event });
-                    }
-                }
+                await handleReaction({ event, api });
                 break;
         }
     } catch (error) {

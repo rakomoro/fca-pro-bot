@@ -7,53 +7,59 @@ const logger = require('./utils/logger.js');
 global.client = {
     commands: new Map(),
     events: new Map(),
+    cooldowns: new Map(),
     handleReply: [],
     handleReaction: [],
     api: null,
-    config: {
-        prefix: "/",
-        admins: ["100000000000000"], // أضف معرفات الأدمن هنا
-        botName: "Manus Bot"
-    }
+    config: require('./config.json')
 };
 
 async function loadModules() {
-    const commandFiles = fs.readdirSync(path.join(__dirname, 'commands')).filter(file => file.endsWith('.js'));
+    // تحميل الأوامر
+    const commandFiles = fs.readdirSync(path.join(__dirname, 'cmd/commands')).filter(file => file.endsWith('.js'));
     for (const file of commandFiles) {
-        const command = require(`./commands/${file}`);
+        const command = require(`./cmd/commands/${file}`);
         if (command.config && command.config.name) {
             global.client.commands.set(command.config.name, command);
         }
     }
-    logger.info(`تم تحميل ${global.client.commands.size} أمراً.`);
+    
+    // تحميل الأحداث
+    const eventFiles = fs.readdirSync(path.join(__dirname, 'cmd/events')).filter(file => file.endsWith('.js'));
+    for (const file of eventFiles) {
+        const event = require(`./cmd/events/${file}`);
+        if (event.config && event.config.name) {
+            global.client.events.set(event.config.name, event);
+        }
+    }
+    
+    logger.info(`تم تحميل ${global.client.commands.size} أمراً و ${global.client.events.size} حدثاً.`);
 }
 
 async function startBot() {
     try {
         await loadModules();
         
-        // قراءة ملف الـ appstate.json (يجب توفره)
-        let appState;
-        if (fs.existsSync('./appstate.json')) {
-            appState = JSON.parse(fs.readFileSync('./appstate.json', 'utf8'));
-        } else {
-            logger.error("لم يتم العثور على ملف appstate.json. يرجى تسجيل الدخول أولاً.");
+        if (!fs.existsSync('./appstate.json')) {
+            logger.error("لم يتم العثور على ملف appstate.json.");
             return;
         }
+        
+        const appState = JSON.parse(fs.readFileSync('./appstate.json', 'utf8'));
 
         login({ appState }, (err, api) => {
             if (err) return logger.error("فشل تسجيل الدخول:", err);
             
             global.client.api = api;
-            api.setOptions({ listenEvents: true, selfListen: false });
+            api.setOptions(global.client.config.FCA_OPTIONS);
 
             const mainHandler = require('./handlers/mainHandler.js');
             api.listenMqtt(async (err, event) => {
                 if (err) return logger.error("خطأ في الاستماع للأحداث:", err);
-                await mainHandler({ event });
+                await mainHandler({ event, api });
             });
 
-            logger.success("تم تشغيل البوت بنجاح!");
+            logger.success("تم تشغيل البوت بنجاح بواسطة Manus!");
         });
     } catch (error) {
         logger.error("حدث خطأ أثناء تشغيل البوت:", error);

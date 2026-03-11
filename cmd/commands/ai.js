@@ -5,7 +5,8 @@ module.exports = {
         name: "ai",
         description: "اسأل الذكاء الاصطناعي",
         usage: "[سؤالك]",
-        category: "ذكاء اصطناعي"
+        category: "ذكاء اصطناعي",
+        cooldowns: 5
     },
     run: async function({ api, event, args }) {
         const { threadID, messageID } = event;
@@ -15,7 +16,6 @@ module.exports = {
 
         try {
             api.sendMessage("⏳ جاري التفكير...", threadID, messageID);
-            // استخدام API مجاني للذكاء الاصطناعي (مثال)
             const response = await axios.get(`https://api.openai.com/v1/chat/completions`, {
                 headers: { 'Authorization': `Bearer ${process.env.OPENAI_API_KEY}` },
                 data: {
@@ -26,7 +26,6 @@ module.exports = {
             const answer = response.data.choices[0].message.content;
             api.sendMessage(answer, threadID, messageID);
         } catch (error) {
-            console.error(error);
             api.sendMessage("حدث خطأ أثناء التواصل مع الذكاء الاصطناعي.", threadID, messageID);
         }
     }
